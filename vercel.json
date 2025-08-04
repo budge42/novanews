@@ -6,6 +6,12 @@
     }
   },
   "builds": [
-    { "src": "api/*.js", "use": "@vercel/node" }
+    { "src": "novanews/api/*.js", "use": "@vercel/node" }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "novanews/api/$1.js"
+    }
   ]
 }
