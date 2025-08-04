@@ -1,32 +1,35 @@
-// api/news.js
-import OpenAI from 'openai';
+const { OpenAI } = require("openai");
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
-export default async function handler(req, res) {
-  const { topic } = JSON.parse(req.body || '{}');
-
+module.exports = async (req, res) => {
   try {
-    const response = await openai.responses.create({
-      model: 'gpt-4.1',
-      tools: [
+    const { topic } = req.body;
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
         {
-          type: 'web_search_preview',
-          user_location: {
-            country: 'NZ',
-            city: 'Auckland',
-            region: 'Auckland'
-          }
-        }
+          role: "system",
+          content: "You are a helpful journalist who writes short summaries of the latest news. Output in array of {title, summary, source, date} in JSON.",
+        },
+        {
+          role: "user",
+          content: `Give me 5 news summaries about "${topic}".`,
+        },
       ],
-      input: `Summarize 3 factual and recent news stories about "${topic}". Output as JSON list of: [{ "title": "...", "summary": "...", "source": "...", "date": "YYYY-MM-DD" }]`,
-      tool_choice: { type: 'web_search_preview' }
     });
 
-    res.status(200).json(response.output.text);
+    // Extract the content string
+    const content = completion.choices?.[0]?.message?.content || "[]";
+
+    // Ensure it's valid JSON and parse it
+    const data = JSON.parse(content);
+    res.status(200).json(data);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: err.message || "Unknown error" });
   }
-}
+};
+
