@@ -68,7 +68,22 @@ export default async function handler(req, res) {
         },
       ],
       tool_choice: { type: "web_search_preview" },
-      input: `You are a cool, relaisitc, deep thinking journalist. Give me 5 real, recent news summaries about "${topic}", preferably published in the last 10 days, in raw JSON array format (title, summary, source, date in YYYY-MM-DD). Skip the first ${offset} results if needed. Include only diverse results. Context hash: ${Math.floor(Math.random() * 1000000)}.`,
+      input: `You are an independent, fact-driven journalist. Return 5 recent, diverse news summaries about "${topic}" from the last 10 days.
+
+Only use independent or trusted investigative sources (e.g. ProPublica, The Intercept, The Conversation, Reuters, NPR, regional outlets, academic or government reports). Avoid mainstream legacy media like CNN, BBC, NYT, Fox, etc.
+
+Requirements:
+- Output must be a valid JSON array of 5 objects.
+- Each object must have:
+  - title (string, unique)
+  - summary (1-2 factual sentences)
+  - source (string, independent or investigative)
+  - date (in YYYY-MM-DD format, must be within last 10 days)
+
+Avoid duplicate titles. Skip the first ${offset} results to get newer or deeper takes.
+
+Format: JSON only. Do NOT include commentary, markdown, or explanation. If unsure, leave it out.`,
+
     });
 
     const rawText = response.output_text;
