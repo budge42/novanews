@@ -44,10 +44,13 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed. Use POST.' });
   }
 
-  const { topic } = req.body || {};
+  const { topic, page = 1 } = req.body || {};
+
   if (!topic || typeof topic !== 'string') {
     return res.status(400).json({ error: 'Missing or invalid "topic" in request body.' });
   }
+
+  const offset = (parseInt(page) - 1) * 5;
 
   try {
     // ✅ Use Web Search tool via Responses API
@@ -57,15 +60,15 @@ export default async function handler(req, res) {
         {
           type: "web_search_preview",
           user_location: {
-  type: "approximate", // ✅ This is the missing required line
-  country: "NZ",
-  city: "Auckland",
-  region: "Auckland",
-},
+            type: "approximate",
+            country: "NZ",
+            city: "Auckland",
+            region: "Auckland",
+          },
         },
       ],
-      tool_choice: { type: "web_search_preview" }, // force web search
-      input: `Give me 5 recent news summaries about "${topic}" in raw JSON array format (title, summary, source, date YYYY-MM-DD).`,
+      tool_choice: { type: "web_search_preview" },
+      input: `Give me 5 real news summaries about "${topic}", preferably from the past 5 days, in raw JSON array format (title, summary, source, date YYYY-MM-DD). Skip the first ${offset} results if needed.`,
     });
 
     const rawText = response.output_text;
