@@ -57,10 +57,11 @@ export default async function handler(req, res) {
         {
           type: "web_search_preview",
           user_location: {
-            country: "NZ",
-            city: "Auckland",
-            region: "Auckland",
-          },
+  type: "approximate", // ✅ This is the missing required line
+  country: "NZ",
+  city: "Auckland",
+  region: "Auckland",
+},
         },
       ],
       tool_choice: { type: "web_search_preview" }, // force web search
