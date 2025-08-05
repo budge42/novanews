@@ -1,4 +1,4 @@
-import OpenAI from 'openai';
+import OpenAI from "openai";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -10,7 +10,7 @@ function extractJsonArray(text) {
   return match ? match[0] : null;
 }
 
-// Ensure news item has correct structure
+// Validate JSON structure
 function isValidNewsItem(item) {
   return (
     typeof item.title === 'string' &&
@@ -20,7 +20,7 @@ function isValidNewsItem(item) {
   );
 }
 
-// Fallback news in case GPT messes up
+// Fallback static data
 function fallbackNews() {
   const today = new Date().toISOString().split('T')[0];
   return [
@@ -50,31 +50,30 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Call GPT-4o
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      temperature: 0.5,
-      max_tokens: 1200,
-      messages: [
+    // ✅ Use Web Search tool via Responses API
+    const response = await openai.responses.create({
+      model: "gpt-4o",
+      tools: [
         {
-          role: 'system',
-          content:
-            'You are a news journalist. Respond ONLY with a raw JSON array of exactly 5 items, each having: title, summary, source, and date (YYYY-MM-DD). Do NOT include any intro, markdown, or extra text — only return raw JSON array.',
-        },
-        {
-          role: 'user',
-          content: `Please give me 5 concise news summaries about: "${topic}"`,
+          type: "web_search_preview",
+          user_location: {
+            country: "NZ",
+            city: "Auckland",
+            region: "Auckland",
+          },
         },
       ],
+      tool_choice: { type: "web_search_preview" }, // force web search
+      input: `Give me 5 recent news summaries about "${topic}" in raw JSON array format (title, summary, source, date YYYY-MM-DD).`,
     });
 
-    const raw = completion.choices?.[0]?.message?.content || '';
-    console.log('🔍 GPT raw output:\n', raw);
+    const rawText = response.output_text;
+    console.log("🌐 GPT Web Search Output:\n", rawText);
 
-    const jsonText = extractJsonArray(raw);
+    const jsonText = extractJsonArray(rawText);
 
     if (!jsonText) {
-      console.warn('⚠️ GPT returned no valid JSON array. Falling back.');
+      console.warn("⚠️ No valid JSON array found. Falling back.");
       return res.status(200).json(fallbackNews());
     }
 
@@ -82,20 +81,20 @@ export default async function handler(req, res) {
     try {
       parsed = JSON.parse(jsonText);
     } catch (err) {
-      console.error('❌ Failed to parse GPT JSON:', err);
+      console.error("❌ Failed to parse JSON:", err);
       return res.status(200).json(fallbackNews());
     }
 
     if (!Array.isArray(parsed) || !parsed.every(isValidNewsItem)) {
-      console.warn('⚠️ GPT returned invalid structure. Falling back.');
+      console.warn("⚠️ Invalid structure in parsed results. Falling back.");
       return res.status(200).json(fallbackNews());
     }
 
     return res.status(200).json(parsed);
   } catch (err) {
-    console.error('🔥 OpenAI API Error:', err);
+    console.error("🔥 OpenAI API Error:", err);
     return res.status(500).json({
-      error: err.message || 'Unexpected server error.',
+      error: err.message || "Unexpected server error.",
       fallback: fallbackNews(),
     });
   }
