@@ -68,7 +68,7 @@ export default async function handler(req, res) {
         },
       ],
       tool_choice: { type: "web_search_preview" },
-      input: `Give me 5 real news summaries about "${topic}", preferably from the past 5 days, in raw JSON array format (title, summary, source, date YYYY-MM-DD). Skip the first ${offset} results if needed.`,
+      input: `Give me 5 real, recent news summaries about "${topic}", preferably published in the last 5 days, in raw JSON array format (title, summary, source, date in YYYY-MM-DD). Skip the first ${offset} results if needed. Include only diverse results. Context hash: ${Math.floor(Math.random() * 1000000)}.`,
     });
 
     const rawText = response.output_text;
