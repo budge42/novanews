@@ -1,17 +1,21 @@
 {
   "version": 2,
   "functions": {
-    "api/*.js": {
+    "api/news.js": {
       "runtime": "nodejs18.x"
     }
   },
   "builds": [
-    { "src": "api/*.js", "use": "@vercel/node" }
+    {
+      "src": "api/news.js",
+      "use": "@vercel/node"
+    }
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "api/$1.js"
+      "src": "/api/news",
+      "methods": ["POST"],
+      "dest": "/api/news.js"
     }
   ]
 }
